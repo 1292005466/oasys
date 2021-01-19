@@ -69,8 +69,8 @@ public class recordInterceptor extends HandlerInterceptorAdapter{
 		}else if(url.endsWith(".jhtml")){
 			return true;
 		}else{
-			response.sendRedirect("/logins");
-			return false;
+			response.sendRedirect("/login.jhtml");
+			return true;
 		}
 		
 		return super.preHandle(request, response, handler);

@@ -49,13 +49,7 @@ public class LoginsController {
 	public String login(){
 		return "login/login";
 	}
-	
-	@RequestMapping("loginout")
-	public String loginout(HttpSession session){
-		session.removeAttribute("userId");
-		return "redirect:/logins";
-	}
-	
+
 	/**
 	 * 登录检查；
 	 * 1、根据(用户名或电话号码)+密码进行查找

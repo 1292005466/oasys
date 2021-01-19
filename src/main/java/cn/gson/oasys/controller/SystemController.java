@@ -50,12 +50,6 @@ public class SystemController {
     @Value("${THIRD_APP_KEY}")
     private String THIRD_APP_KEY;
 
-    @Value("${BASE_URL}")
-    private String BASE_URL;
-
-    @Value("${SSO_BASE_URL}")
-    private String SSO_BASE_URL;
-
     @Autowired
     private SystemService systemService;
 
@@ -129,8 +123,20 @@ public class SystemController {
             dept.setSysId(sysId);
             dept.setDeptmanager(0L);
             Dept adddept = deptdao.save(dept);
-            //职位
-            Position position = pdao.findOne(2L);
+            //新建职位
+            Position position = new Position();
+            position.setName("经理");
+            position.setDescribtion("经理");
+            position.setLevel(3);
+            position.setDeptid(adddept.getDeptId());
+            position = pdao.save(position);
+            Position position2 = new Position();
+            position2.setName("职员");
+            position2.setDescribtion("职员");
+            position2.setLevel(4);
+            position2.setDeptid(adddept.getDeptId());
+            position2 = pdao.save(position2);
+            //Position position = pdao.findOne(2L);
             //角色
             Role role = rdao.findOne(2L);
             //新建用户
@@ -164,7 +170,15 @@ public class SystemController {
             return result;
         }
     }
-
+    /**
+     * 重定向登录地址
+     * @param request
+     * @return
+     */
+    @GetMapping("/registUser.jhtml")
+    public String registUser(HttpServletRequest request, ModelMap modelMapt){
+        return "redirect:/login.jhtml";
+    }
     /**
      * 登录地址
      * @param info
@@ -175,11 +189,17 @@ public class SystemController {
     public String login(String info, HttpServletRequest request, ModelMap modelMapt){
         logger.info("/login.jhtml-登录地址-请求入参："+info);
         String domainUrl = request.getRequestURL().toString().replace(request.getRequestURI(),"");
-        String accesstoken=systemService.getToken();//获取token
+        //获取登录地址及token
+        JSONObject jsonObject = systemService.getLoginUrl();
+        if(!jsonObject.getBoolean("success")){
+            logger.info("/login.jhtml-登录地址-获取登录地址："+jsonObject.getString("resultMessage"));
+            modelMapt.put("msg",jsonObject.getString("resultMessage"));//仅为示例
+            return "error/error";
+        }
         //封装数据,returnUrl为用户信息返回地址
         JSONObject jsoninfo = new JSONObject();
         jsoninfo.put("returnUrl", domainUrl+"/loginCserver.jhtml");
-        jsoninfo.put("access_token", accesstoken);
+        jsoninfo.put("access_token", jsonObject.getString("access_token"));
         String infoString = "";
         try{
             infoString = URLEncoder.encode(jsoninfo.toJSONString(),"UTF-8");//必须转码
@@ -187,8 +207,25 @@ public class SystemController {
             e.printStackTrace();
             logger.info("/login.jhtml-登录地址-编码异常："+e);
         }
-        logger.info("/login.jhtml-登录地址-响应结果："+SSO_BASE_URL+"/sso.web/loginCserver?info="+jsoninfo.toJSONString());
-        return "redirect:"+SSO_BASE_URL+"/sso.web/loginCserver?info="+infoString;
+        logger.info("/login.jhtml-登录地址-响应结果："+jsonObject.getString("ssoBaseUrl")+"?info="+jsoninfo.toJSONString());
+        return "redirect:"+jsonObject.getString("ssoBaseUrl")+"?info="+infoString;
+    }
+
+    /**
+     * 退出
+     * @param session
+     * @return
+     */
+    @RequestMapping("loginout")
+    public String loginout(HttpSession session, ModelMap modelMapt){
+        JSONObject jsonObject = systemService.getLogoutUrl();
+        if(!jsonObject.getBoolean("success")){
+            logger.info("/loginout-退出地址-获取登录地址："+jsonObject.getString("resultMessage"));
+            modelMapt.put("msg",jsonObject.getString("resultMessage"));//仅为示例
+            return "error/error";
+        }
+        session.removeAttribute("userId");
+        return "redirect:"+jsonObject.getString("ssologoutUrl");
     }
 
     /**
@@ -207,6 +244,7 @@ public class SystemController {
                 JSONObject jsonget = JSONObject.parseObject(info);
                 String access_token = jsonget.getString("access_token");
                 //判断token是否改变
+                //获取token
                 if (access_token == null || !access_token.equals(systemService.getToken())) {
                     modelMap.put("msg", "非法访问,token不合法");
                     return "error/error";

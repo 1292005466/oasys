@@ -132,6 +132,14 @@
 			<artifactId>spring-boot-devtools</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<!--引入接口对接SDK-->
+		<dependency>
+			<groupId>local</groupId>
+			<artifactId>cserver-rest</artifactId>
+			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/cserver-rest-1.0.jar</systemPath>
+		</dependency>
 	</dependencies>
 
 	<build>

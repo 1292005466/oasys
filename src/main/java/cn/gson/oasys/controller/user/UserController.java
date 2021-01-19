@@ -194,6 +194,13 @@ public class UserController {
 			user2.setRole(role);
 			user2.setPosition(position);
 			udao.save(user2);
+			//同步平台用户信息
+			JSONObject result = systemService.updatePtUser(user2,tuser.getDept().getSysId());
+			if(!result.getBoolean("success")){
+				model.addAttribute("success",0);
+				model.addAttribute("msg",result.getString("resultMessage"));//返回失败原因
+				return "/usermanage";
+			}
 		}
 		
 		model.addAttribute("success",1);
